@@ -23,6 +23,7 @@ jobs:
         with:
           node-version-file: package.json
           run-install: false
+          cache: true
       - name: Install dependencies
         run: vp install
       - name: Verify RTL behavior
@@ -65,11 +66,13 @@ jobs:
           export T3CODE_MACOS_PROVISIONING_PROFILE="$RUNNER_TEMP/t3code.provisionprofile"
           printf '%s' "$MACOS_PROVISIONING_PROFILE" | base64 -D > "$T3CODE_MACOS_PROVISIONING_PROFILE"
           vp run dist:desktop:artifact --platform mac --target dmg --arch arm64 --build-version "$BUILD_VERSION" --signed --verbose
-          for dmg in release/*.dmg; do
-            xcrun notarytool submit "$dmg" --key "$APPLE_API_KEY" --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER" --wait
-            xcrun stapler staple "$dmg"
-            xcrun stapler validate "$dmg"
-          done
+          # Validate the stapled app without changing artifacts after updater hashes are generated.
+          mount_dir="$RUNNER_TEMP/verify-dmg"
+          mkdir -p "$mount_dir"
+          hdiutil attach release/*.dmg -mountpoint "$mount_dir" -nobrowse -readonly
+          trap 'hdiutil detach "$mount_dir"' EXIT
+          codesign --verify --deep --strict "$mount_dir/T3 Code (Nightly) RTL.app"
+          xcrun stapler validate "$mount_dir/T3 Code (Nightly) RTL.app"
       - name: Publish fork release
         env:
           GH_TOKEN: ${{ github.token }}
