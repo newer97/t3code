@@ -27,7 +27,7 @@ jobs:
         run: vp install
       - name: Verify RTL behavior
         run: |
-          vp test run apps/web/src/components/chat/MessagesTimeline.test.tsx apps/web/src/components/ChatMarkdown.test.tsx apps/mobile/src/lib/textDirection.test.ts
+          vp test run apps/web/src/components/chat/MessagesTimeline.test.tsx apps/web/src/components/ChatMarkdown.test.tsx apps/mobile/src/lib/textDirection.test.ts scripts/build-desktop-artifact.test.ts
           vp run --filter @t3tools/web typecheck
           vp run --filter @t3tools/mobile typecheck
       - uses: dtolnay/rust-toolchain@stable
@@ -45,11 +45,28 @@ jobs:
           cp .env.example .env
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=rtl-v$version" >> "$GITHUB_OUTPUT"
-      - name: Build unsigned Apple Silicon DMG
+      - name: Build signed and notarized Apple Silicon DMG
         env:
           BUILD_VERSION: ${{ steps.version.outputs.version }}
-          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-        run: vp run dist:desktop:artifact --platform mac --target dmg --arch arm64 --build-version "$BUILD_VERSION" --verbose
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          T3CODE_APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+          MACOS_PROVISIONING_PROFILE: ${{ secrets.MACOS_PROVISIONING_PROFILE }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          key_path="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID}.p8"
+          printf '%s' "$APPLE_API_KEY" > "$key_path"
+          export APPLE_API_KEY="$key_path"
+          export T3CODE_MACOS_PROVISIONING_PROFILE="$RUNNER_TEMP/t3code.provisionprofile"
+          printf '%s' "$MACOS_PROVISIONING_PROFILE" | base64 -D > "$T3CODE_MACOS_PROVISIONING_PROFILE"
+          vp run dist:desktop:artifact --platform mac --target dmg --arch arm64 --build-version "$BUILD_VERSION" --signed --verbose
+          for dmg in release/*.dmg; do
+            xcrun stapler validate "$dmg"
+          done
       - name: Publish fork release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -65,13 +82,9 @@ jobs:
           cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
           Personal Apple Silicon build of T3 Code with Arabic/Hebrew message direction from upstream PR #10779.
 
-          Includes the bundled server. This is an unsigned, unnotarized macOS build. Install future fork releases manually; desktop auto-update is disabled for this preview version. Remote servers remain separate installations; this fork version is not published to npm.
+          Signed and notarized under shaden alawaji (XF983AFG67), bundle ID dev.snaya.t3code. Includes the bundled server.
 
-          If macOS blocks the downloaded DMG, remove its quarantine attribute only after verifying you downloaded this release:
-
-          ```sh
-          xattr -d com.apple.quarantine ~/Downloads/<downloaded-file>.dmg
-          ```
+          Install future fork releases manually; desktop auto-update is disabled for this preview version. Remote servers remain separate installations; this fork version is not published to npm. Native T3 Connect passkeys require upstream domain authorization for this Apple team.
 
           Original RTL work by @ShlomiPorush; upstream rebuild by @haithamassoli.
           NOTES
