@@ -1,0 +1,81 @@
+name: Fork macOS Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fork-macos-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'newer97/t3code'
+    runs-on: macos-15
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version-file: package.json
+          run-install: false
+      - name: Install dependencies
+        run: vp install
+      - name: Verify RTL behavior
+        run: |
+          vp test run apps/web/src/components/chat/MessagesTimeline.test.tsx apps/web/src/components/ChatMarkdown.test.tsx apps/mobile/src/lib/textDirection.test.ts
+          vp run --filter @t3tools/web typecheck
+          vp run --filter @t3tools/mobile typecheck
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+      - name: Prepare fork version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          base_version="$(node -p "require('./apps/desktop/package.json').version")"
+          # Preview versions disable desktop auto-update; this fork has no matching npm release.
+          version="${base_version}-pr.10779.${GITHUB_RUN_NUMBER}"
+          node scripts/update-release-package-versions.ts "$version"
+          cp .env.example .env
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=rtl-v$version" >> "$GITHUB_OUTPUT"
+      - name: Build unsigned Apple Silicon DMG
+        env:
+          BUILD_VERSION: ${{ steps.version.outputs.version }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: vp run dist:desktop:artifact --platform mac --target dmg --arch arm64 --build-version "$BUILD_VERSION" --verbose
+      - name: Publish fork release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(release/*.dmg)
+          (( ${#files[@]} == 1 ))
+          shasum -a 256 "${files[@]}" > release/SHA256SUMS.txt
+          cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
+          Personal Apple Silicon build of T3 Code with Arabic/Hebrew message direction from upstream PR #10779.
+
+          Includes the bundled server. This is an unsigned, unnotarized macOS build. Install future fork releases manually; desktop auto-update is disabled for this preview version. Remote servers remain separate installations; this fork version is not published to npm.
+
+          If macOS blocks the downloaded DMG, remove its quarantine attribute only after verifying you downloaded this release:
+
+          ```sh
+          xattr -d com.apple.quarantine ~/Downloads/<downloaded-file>.dmg
+          ```
+
+          Original RTL work by @ShlomiPorush; upstream rebuild by @haithamassoli.
+          NOTES
+          gh release create "$RELEASE_TAG" "${files[@]}" release/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "T3 Code RTL $RELEASE_VERSION — macOS Apple Silicon" \
+            --notes-file "$RUNNER_TEMP/release-notes.md" --prerelease
