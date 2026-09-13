@@ -2642,7 +2642,7 @@ export function resolvePackageManagerUserAgent(packageManager: string): string {
 
 export function resolveDesktopProductName(version: string): string {
   return resolveDesktopUpdateChannel(version) === "nightly"
-    ? "T3 Code (Nightly)"
+    ? "T3 Code (Nightly) RTL"
     : (desktopPackageJson.productName ?? "T3 Code");
 }
 

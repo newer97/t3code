@@ -30,6 +30,7 @@ jobs:
           vp test run apps/web/src/components/chat/MessagesTimeline.test.tsx apps/web/src/components/ChatMarkdown.test.tsx apps/mobile/src/lib/textDirection.test.ts scripts/build-desktop-artifact.test.ts
           vp run --filter @t3tools/web typecheck
           vp run --filter @t3tools/mobile typecheck
+          vp run --filter @t3tools/desktop typecheck
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-apple-darwin
@@ -39,15 +40,15 @@ jobs:
         run: |
           set -euo pipefail
           base_version="$(node -p "require('./apps/desktop/package.json').version")"
-          # Preview versions disable desktop auto-update; this fork has no matching npm release.
-          version="${base_version}-pr.10779.${GITHUB_RUN_NUMBER}"
+          version="${base_version}-nightly.$(date -u +%Y%m%d).${GITHUB_RUN_NUMBER}"
           node scripts/update-release-package-versions.ts "$version"
           cp .env.example .env
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "tag=rtl-v$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
       - name: Build signed and notarized Apple Silicon DMG
         env:
           BUILD_VERSION: ${{ steps.version.outputs.version }}
+          T3CODE_DESKTOP_UPDATE_REPOSITORY: newer97/t3code
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
@@ -65,6 +66,8 @@ jobs:
           printf '%s' "$MACOS_PROVISIONING_PROFILE" | base64 -D > "$T3CODE_MACOS_PROVISIONING_PROFILE"
           vp run dist:desktop:artifact --platform mac --target dmg --arch arm64 --build-version "$BUILD_VERSION" --signed --verbose
           for dmg in release/*.dmg; do
+            xcrun notarytool submit "$dmg" --key "$APPLE_API_KEY" --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER" --wait
+            xcrun stapler staple "$dmg"
             xcrun stapler validate "$dmg"
           done
       - name: Publish fork release
@@ -76,19 +79,22 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          files=(release/*.dmg)
-          (( ${#files[@]} == 1 ))
+          test -f release/nightly-mac.yml
+          files=(release/*.dmg release/*.zip release/*.blockmap release/nightly-mac.yml)
+          (( ${#files[@]} >= 3 ))
           shasum -a 256 "${files[@]}" > release/SHA256SUMS.txt
           cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
           Personal Apple Silicon build of T3 Code with Arabic/Hebrew message direction from upstream PR #10779.
 
           Signed and notarized under shaden alawaji (XF983AFG67), bundle ID dev.snaya.t3code. Includes the bundled server.
 
-          Install future fork releases manually; desktop auto-update is disabled for this preview version. Remote servers remain separate installations; this fork version is not published to npm. Native T3 Connect passkeys require upstream domain authorization for this Apple team.
+          T3 Code (Nightly) RTL checks this fork for updates on the Nightly track. Use the normal update button to download and restart. Install this DMG once to switch from upstream or the older unsigned preview.
+
+          Remote servers remain separate installations; this fork version is not published to npm. Native T3 Connect passkeys require upstream domain authorization for this Apple team; passkey code is unchanged.
 
           Original RTL work by @ShlomiPorush; upstream rebuild by @haithamassoli.
           NOTES
           gh release create "$RELEASE_TAG" "${files[@]}" release/SHA256SUMS.txt \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --title "T3 Code RTL $RELEASE_VERSION — macOS Apple Silicon" \
+            --title "T3 Code (Nightly) RTL $RELEASE_VERSION — macOS Apple Silicon" \
             --notes-file "$RUNNER_TEMP/release-notes.md" --prerelease

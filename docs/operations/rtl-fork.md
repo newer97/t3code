@@ -21,12 +21,17 @@ It signs and notarizes using the Shaden Alawaji team (`XF983AFG67`) and the
 fork's bundle identifier `dev.snaya.t3code`. Signing credentials live in
 GitHub Actions secrets; the Team ID is a repository variable.
 
-Releases use `rtl-v…` tags so they do not trigger upstream's release workflow.
-The package version retains `-pr.10779.…`, which disables desktop auto-update.
-Install subsequent DMGs manually. These releases include the bundled server but
-do not publish a matching npm package; separately installed remote servers
-must be maintained independently. Native T3 Connect passkeys require upstream
-to authorize this team's application on its associated domain.
+Releases use the normal `vX.Y.Z-nightly.YYYYMMDD.RUN` tags and include the
+DMG, ZIP, blockmaps, and `nightly-mac.yml` update manifest. **T3 Code (Nightly)
+RTL** checks `newer97/t3code` for updates on the Nightly track. Install the first
+signed DMG manually; subsequent releases use the normal download/restart button.
+Keep the updater on Nightly; this fork publishes no stable channel.
+
+These releases include the bundled server but do not publish a matching npm
+package. Separately installed remote servers must be maintained independently;
+do not use the client-version update action to install a fork version from npm.
+Native T3 Connect passkeys require upstream to authorize this team's application
+on its associated domain. The upstream authentication code is unchanged.
 
 Upstream deployment and publishing workflows are disabled in this fork's
 GitHub Actions settings. Keep them disabled when syncing; they depend on
