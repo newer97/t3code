@@ -3215,9 +3215,11 @@ const CHAT_MARKDOWN_COMPONENTS = {
             </pre>
           }
         >
+          {/* Reserve the block's height but stay hidden until Shiki has colored
+              it, so plain text never flashes before the highlighted version. */}
           <Suspense
             fallback={
-              <pre {...props} dir="ltr">
+              <pre {...props} dir="ltr" className="invisible" aria-hidden>
                 {children}
               </pre>
             }
@@ -3275,6 +3277,8 @@ function ChatMarkdown({
         className,
       )}
       dir="auto"
+      // Gates the fade-in for blocks that arrive while the response streams.
+      data-streaming={componentState.isStreaming ? "" : undefined}
       onCopy={handleCopy}
     >
       <ChatMarkdownRendererContext value={componentState}>
