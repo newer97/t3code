@@ -27,9 +27,10 @@ RTL** checks `newer97/t3code` for updates on the Nightly track. Install the firs
 signed DMG manually; subsequent releases use the normal download/restart button.
 Keep the updater on Nightly; this fork publishes no stable channel.
 
-These releases include the bundled server but do not publish a matching npm
-package. Separately installed remote servers must be maintained independently;
-do not use the client-version update action to install a fork version from npm.
+These releases include the bundled server but do not publish standalone CLI
+runtime archives. Upstream now installs remote runtimes from release archives;
+separately installed remote servers must be maintained independently rather
+than updated to this fork's desktop version.
 Native T3 Connect passkeys require upstream to authorize this team's application
 on its associated domain. The upstream authentication code is unchanged.
 
