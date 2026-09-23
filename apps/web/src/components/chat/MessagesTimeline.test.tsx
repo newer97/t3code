@@ -1155,7 +1155,9 @@ describe("MessagesTimeline", () => {
       />,
     );
 
-    expect(markup).toMatch(/<a[^>]*dir="ltr"[^>]*class="[^"]*chat-markdown-file-link/);
+    expect(markup).toMatch(
+      /<a(?=[^>]*class="[^"]*chat-markdown-file-link)(?=[^>]*dir="ltr")[^>]*>/,
+    );
     expect(markup).toMatch(/<code[^>]*dir="ltr"[^>]*>vp test<\/code>/);
     expect(markup).toMatch(/class="chat-markdown-codeblock[^"]*"[^>]*dir="ltr"/);
   });
