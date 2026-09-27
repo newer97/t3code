@@ -1,6 +1,9 @@
 name: Fork macOS Release
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -12,7 +15,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.repository == 'newer97/t3code'
+    if: github.repository == 'newer97/t3code' && !contains(github.event.head_commit.message, '[skip release]')
     runs-on: macos-15
     timeout-minutes: 60
     permissions:
