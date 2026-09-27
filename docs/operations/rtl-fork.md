@@ -1,7 +1,10 @@
 # Maintaining the RTL fork
 
 `newer97/t3code` keeps upstream PR [#10779](https://github.com/pingdotgg/t3code/pull/10779)
-merged into `main`. Preserve that history when updating from upstream:
+merged into `main`. The **Sync RTL fork** workflow checks upstream daily at
+03:17 UTC and merges new commits into the fork's `main` branch. It does not
+publish a release. A merge conflict fails the run without pushing; resolve it
+manually. The workflow can also be run manually. To sync locally:
 
 ```sh
 git switch main
@@ -10,13 +13,14 @@ git fetch upstream main
 git merge upstream/main
 # Resolve any conflicts and run the focused tests before pushing.
 git push origin main
-gh workflow run fork-release.yml --repo newer97/t3code --ref main
 ```
 
 If the checkout has no `upstream` remote, add it with
 `git remote add upstream https://github.com/pingdotgg/t3code.git`.
-The manual **Fork macOS Release** workflow runs RTL regression tests, packaging
-unit tests, and web/mobile typechecks before building an Apple Silicon DMG.
+When you want a new installer, run
+`gh workflow run fork-release.yml --repo newer97/t3code --ref main`. The manual
+**Fork macOS Release** workflow runs RTL regression tests, packaging unit tests,
+and web/mobile typechecks before building an Apple Silicon DMG.
 It signs and notarizes using the Shaden Alawaji team (`XF983AFG67`) and the
 fork's bundle identifier `dev.snaya.t3code`. Signing credentials live in
 GitHub Actions secrets; the Team ID is a repository variable.
