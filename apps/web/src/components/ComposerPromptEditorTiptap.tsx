@@ -77,6 +77,7 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip";
 import { importPastedComposerText } from "./composerInlineTokenPaste";
 import { didComposerSelectionChangeVisibly } from "./composerSelection";
 import type { ComposerDraftContextRecords } from "./composerContextPresentation";
+import { resolveFirstStrongTextDirection } from "../lib/textDirection";
 
 export interface ComposerPromptEditorHandle {
   focus: () => void;
@@ -753,6 +754,7 @@ function ComposerPromptEditorTiptapInner(props: ComposerPromptEditorProps) {
       "data-testid": "composer-editor",
       "data-composer-rich-text": richText ? "true" : "false",
       "aria-placeholder": placeholder,
+      dir: "auto",
     }),
     [className, placeholder, richText],
   );
@@ -870,7 +872,10 @@ function ComposerPromptEditorTiptapInner(props: ComposerPromptEditorProps) {
             view.state.selection.empty
           ) {
             const { $from } = view.state.selection;
-            const direction = event.key === "ArrowLeft" ? -1 : 1;
+            // Paragraphs resolve their own direction (see `.composer-tiptap p`),
+            // so ArrowLeft steps forward through an RTL line.
+            const rtl = resolveFirstStrongTextDirection($from.parent.textContent) === "rtl";
+            const direction = (event.key === "ArrowLeft") !== rtl ? -1 : 1;
             const adjacent = direction === -1 ? $from.nodeBefore : $from.nodeAfter;
             if (adjacent?.type.name.startsWith("composer-")) {
               event.preventDefault();

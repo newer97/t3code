@@ -1231,20 +1231,25 @@ describe("MessagesTimeline", () => {
     expect(markup).toMatch(/class="chat-markdown-codeblock[^"]*"[^>]*dir="ltr"/);
   });
 
-  it("keeps table structure left-to-right while resolving each cell direction", () => {
-    const markup = renderToStaticMarkup(
-      <MessagesTimeline
-        {...buildProps()}
-        timelineEntries={[
-          buildAssistantTimelineEntry(
-            ["| Name | תיאור |", "| --- | --- |", "| test | בדיקה |"].join("\n"),
-          ),
-        ]}
-      />,
-    );
+  it("orders table columns by the table's dominant script", () => {
+    const renderTable = (rows: string[]) =>
+      renderToStaticMarkup(
+        <MessagesTimeline
+          {...buildProps()}
+          timelineEntries={[buildAssistantTimelineEntry(rows.join("\n"))]}
+        />,
+      );
 
-    expect(markup).toMatch(/class="chat-markdown-table-container"[^>]*dir="ltr"/);
-    expect(markup.match(/<(?:th|td)[^>]*dir="auto"/g)).toHaveLength(4);
+    const arabic = renderTable([
+      "| | WSL Containers الجديد |",
+      "| --- | --- |",
+      "| وش تشغل؟ | حاويات من صور جاهزة، مثل `nginx` و Redis |",
+    ]);
+    const english = renderTable(["| Name | Description |", "| --- | --- |", "| test | בדיקה |"]);
+
+    expect(arabic).toMatch(/class="chat-markdown-table-container"[^>]*dir="ltr"/);
+    expect(arabic).toMatch(/<table[^>]*dir="rtl"/);
+    expect(english).toMatch(/<table[^>]*dir="ltr"/);
   });
 
   it("uses logical spacing for GitHub alerts inside auto-directed messages", () => {

@@ -2144,6 +2144,10 @@ code {
 
 .composer-tiptap p {
   margin: 0;
+  /* Each line takes its direction from its own text, so an English URL and an
+     Arabic question in one prompt both read naturally. */
+  unicode-bidi: plaintext;
+  text-align: start;
 }
 
 .composer-tiptap:focus,

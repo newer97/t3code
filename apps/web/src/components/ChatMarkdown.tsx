@@ -134,6 +134,7 @@ import { openInEditorMenuLabel } from "../editorLabels";
 import { resolveDiffThemeName, type DiffThemeName } from "../lib/diffRendering";
 import { fnv1a32 } from "../lib/diffRendering";
 import { LRUCache } from "../lib/lruCache";
+import { resolveMarkdownTableDirection } from "../lib/textDirection";
 import { getSyntaxHighlighterPromise } from "../lib/syntaxHighlighting";
 import { GitHubIcon } from "./Icons";
 import { createIncrementalHighlightedDocument } from "../lib/incrementalHighlighting";
@@ -3264,14 +3265,10 @@ const CHAT_MARKDOWN_COMPONENTS = {
     }
     return <ChatMarkdownImageFallback alt={altText} copyMarkdown={copyMarkdown} kind={kind} />;
   },
-  table: function MarkdownTableRenderer({ node: _node, ...props }) {
-    return <MarkdownTable {...props} />;
-  },
-  th: function MarkdownTh({ node: _node, ...props }) {
-    return <th {...props} dir="auto" />;
-  },
-  td: function MarkdownTd({ node: _node, ...props }) {
-    return <td {...props} dir="auto" />;
+  table: function MarkdownTableRenderer({ node, ...props }) {
+    // The container stays LTR for its toolbar, so the table resolves its own
+    // column order from its content.
+    return <MarkdownTable {...props} dir={resolveMarkdownTableDirection(node)} />;
   },
   details: function MarkdownDetailsRenderer({ node: _node, children, open: detailsOpen }) {
     return <MarkdownDetails open={detailsOpen}>{children}</MarkdownDetails>;
