@@ -1,0 +1,31 @@
+name: Fork Sync Preflight
+
+on:
+  push:
+    branches:
+      - automation/sync-preflight-20261003
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: voidzero-dev/setup-vp@v1
+        with:
+          node-version-file: package.json
+          cache: true
+          run-install: true
+      - name: Ensure Electron runtime is installed
+        run: vp run --filter @t3tools/desktop ensure:electron
+      - name: Focused RTL tests
+        run: vp test run apps/web/src/components/chat/MessagesTimeline.test.tsx apps/web/src/components/ChatMarkdown.test.tsx apps/mobile/src/lib/textDirection.test.ts scripts/build-desktop-artifact.test.ts
+      - name: Web typecheck
+        run: vp run --filter @t3tools/web typecheck
+      - name: Mobile typecheck
+        run: vp run --filter @t3tools/mobile typecheck
+      - name: Desktop typecheck
+        run: vp run --filter @t3tools/desktop typecheck
