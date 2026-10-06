@@ -32,10 +32,12 @@ export function resolveCatalogDependencies(
       }
 
       const catalogKey = spec.slice("catalog:".length).trim();
-      // An override key can be a selector such as `@scope/parent>effect`; like
-      // pnpm, a bare `catalog:` there means the catalog entry of the package
-      // the selector ends in.
-      const lookupKey = catalogKey.length > 0 ? catalogKey : (name.split(">").at(-1) ?? name);
+      // Override selectors can include a parent and a version range. A bare
+      // `catalog:` resolves the target package, preserving a scoped name's @.
+      const target = name.split(">").at(-1) ?? name;
+      const versionIndex = target.indexOf("@", 1);
+      const packageName = versionIndex === -1 ? target : target.slice(0, versionIndex);
+      const lookupKey = catalogKey.length > 0 ? catalogKey : packageName;
       const resolved = catalog[lookupKey];
 
       if (typeof resolved !== "string" || resolved.length === 0) {
