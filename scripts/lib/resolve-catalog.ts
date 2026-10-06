@@ -32,11 +32,11 @@ export function resolveCatalogDependencies(
       }
 
       const catalogKey = spec.slice("catalog:".length).trim();
-      // Override selectors can include a parent and a version range. A bare
-      // `catalog:` resolves the target package, preserving a scoped name's @.
-      const target = name.split(">").at(-1) ?? name;
-      const versionIndex = target.indexOf("@", 1);
-      const packageName = versionIndex === -1 ? target : target.slice(0, versionIndex);
+      // Overrides can include a parent selector and a version range. A bare
+      // `catalog:` looks up the final package name, keeping its scope intact.
+      const selector = name.split(">").at(-1) ?? name;
+      const versionIndex = selector.indexOf("@", 1);
+      const packageName = versionIndex === -1 ? selector : selector.slice(0, versionIndex);
       const lookupKey = catalogKey.length > 0 ? catalogKey : packageName;
       const resolved = catalog[lookupKey];
 
