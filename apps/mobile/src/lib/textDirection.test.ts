@@ -1,10 +1,14 @@
-import type { MarkdownNode } from "react-native-nitro-markdown";
+import type { Root, RootContent } from "mdast";
 import { describe, expect, it } from "vite-plus/test";
 
-import { resolveMarkdownNodeTextDirection, resolveTextDirection } from "./textDirection";
+import {
+  resolveMarkdownNodeTextDirection,
+  resolveMarkdownTextDirection,
+  resolveTextDirection,
+} from "./textDirection";
 
-const documentWith = (...children: MarkdownNode[]): MarkdownNode => ({
-  type: "document",
+const documentWith = (...children: RootContent[]): Root => ({
+  type: "root",
   children,
 });
 
@@ -32,12 +36,12 @@ describe("resolveTextDirection", () => {
     expect(
       resolveMarkdownNodeTextDirection(
         documentWith(
-          { type: "code_block", content: "npm test" },
+          { type: "code", value: "npm test" },
           {
             type: "paragraph",
             children: [
-              { type: "code_inline", content: "English inline code" },
-              { type: "text", content: " שלום" },
+              { type: "inlineCode", value: "English inline code" },
+              { type: "text", value: " שלום" },
             ],
           },
         ),
@@ -49,8 +53,8 @@ describe("resolveTextDirection", () => {
         documentWith({
           type: "paragraph",
           children: [
-            { type: "code_inline", content: "שלום" },
-            { type: "text", content: " English prose" },
+            { type: "inlineCode", value: "שלום" },
+            { type: "text", value: " English prose" },
           ],
         }),
       ),
@@ -65,11 +69,22 @@ describe("resolveTextDirection", () => {
           children: [
             {
               type: "paragraph",
-              children: [{ type: "text", content: "[!NOTE] הודעת התראה בעברית." }],
+              children: [{ type: "text", value: "[!NOTE] הודעת התראה בעברית." }],
             },
           ],
         }),
       ),
     ).toBe("rtl");
+  });
+});
+
+describe("resolveMarkdownTextDirection", () => {
+  it("resolves message prose after code, images, and alert markers", () => {
+    expect(resolveMarkdownTextDirection("```sh\nnpm test\n```\n\n`English` שלום")).toBe("rtl");
+    expect(
+      resolveMarkdownTextDirection("![English](image.png)\n\n> [!NOTE]\n> رسالة بالعربية"),
+    ).toBe("rtl");
+    expect(resolveMarkdownTextDirection("`שלום` English prose")).toBe("ltr");
+    expect(resolveMarkdownTextDirection("```sh\nnpm test\n```")).toBe("ltr");
   });
 });

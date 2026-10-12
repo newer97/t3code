@@ -1,4 +1,4 @@
-import type { MarkdownNode } from "react-native-nitro-markdown";
+import { parseMarkdownDocument, type MarkdownNode } from "./markdownDocument";
 
 export type TextDirection = "ltr" | "rtl";
 
@@ -8,15 +8,15 @@ const RTL_SCRIPT_CHARACTER =
 const GITHUB_ALERT_MARKER = /\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/giu;
 
 function markdownProse(node: MarkdownNode): string {
-  if (node.type === "code_inline" || node.type === "code_block" || node.type === "image") {
+  if (node.type === "inlineCode" || node.type === "code" || node.type === "image") {
     return "";
   }
 
   if (node.type === "text") {
-    return (node.content ?? "").replace(GITHUB_ALERT_MARKER, "");
+    return node.value.replace(GITHUB_ALERT_MARKER, "");
   }
 
-  return node.children?.map(markdownProse).join("") ?? "";
+  return "children" in node ? node.children.map(markdownProse).join("") : "";
 }
 
 export function resolveTextDirection(text: string): TextDirection {
@@ -29,4 +29,8 @@ export function resolveTextDirection(text: string): TextDirection {
 
 export function resolveMarkdownNodeTextDirection(node: MarkdownNode): TextDirection {
   return resolveTextDirection(markdownProse(node));
+}
+
+export function resolveMarkdownTextDirection(markdown: string): TextDirection {
+  return resolveMarkdownNodeTextDirection(parseMarkdownDocument(markdown));
 }
