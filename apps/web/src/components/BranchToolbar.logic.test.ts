@@ -12,6 +12,7 @@ import {
   resolveBranchTriggerLabel,
   resolveBranchToolbarPrBranch,
   resolveBranchToolbarValue,
+  resolveConfiguredWorktreeBase,
   resolveLockedWorkspaceLabel,
   resolveLocalCheckoutBranchMismatch,
   resolvePreviousWorktreeLabel,
@@ -881,5 +882,27 @@ describe("sanitizeNewRefName", () => {
   it("does not collapse dashes the user typed", () => {
     expect(sanitizeNewRefName("new - branch")).toBe("new---branch");
     expect(sanitizeNewRefName("foo--bar")).toBe("foo--bar");
+  });
+});
+
+describe("resolveConfiguredWorktreeBase", () => {
+  const refs = [
+    { name: "main" },
+    { name: "dev" },
+    { name: "origin/dev", isRemote: true, remoteName: "origin" },
+    { name: "origin/release", isRemote: true, remoteName: "origin" },
+  ];
+
+  it("prefers the local branch", () => {
+    expect(resolveConfiguredWorktreeBase(refs, "dev")).toBe("dev");
+  });
+
+  it("uses the remote-tracking ref when the branch only exists remotely", () => {
+    expect(resolveConfiguredWorktreeBase(refs, "release")).toBe("origin/release");
+  });
+
+  it("falls back when unset or missing", () => {
+    expect(resolveConfiguredWorktreeBase(refs, "")).toBeNull();
+    expect(resolveConfiguredWorktreeBase(refs, "staging")).toBeNull();
   });
 });

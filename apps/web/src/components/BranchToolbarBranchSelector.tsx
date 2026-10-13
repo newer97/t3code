@@ -2,6 +2,7 @@ import { ThreadDetailsControl } from "./chat/ThreadDetailsControl";
 import { ComposerContextLabel } from "./ComposerContextLabel";
 import { useSupportsMultiplePullRequests } from "~/hooks/useSupportsMultiplePullRequests";
 import { resolveThreadCurrentPullRequestLink } from "@t3tools/shared/threadPullRequests";
+import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { useRightPanelStore } from "../rightPanelStore";
 import { scopeProjectRef, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import {
@@ -32,6 +33,7 @@ import {
 
 import { useComposerDraftStore, type DraftId } from "../composerDraftStore";
 import { writeTextToClipboard } from "../hooks/useCopyToClipboard";
+import { useEnvironmentSettings } from "../hooks/useSettings";
 import { readLocalApi } from "../localApi";
 import { useOpenPrLink } from "../lib/openPullRequestLink";
 import { usePaginatedBranches } from "../state/queries";
@@ -53,6 +55,7 @@ import {
   resolveBranchToolbarPrBranch,
   resolveBranchSelectionTarget,
   resolveBranchToolbarValue,
+  resolveConfiguredWorktreeBase,
   resolveDraftEnvModeAfterBranchChange,
   resolveEffectiveEnvMode,
   sanitizeNewRefName,
@@ -535,15 +538,35 @@ export function BranchToolbarBranchSelector({
     });
   };
 
-  // Default the worktree base to the repo default branch (origin/HEAD), only
-  // falling back to the checked-out branch when no default is known.
+  // Default the worktree base to the project's configured base branch, then
+  // the repo default branch (origin/HEAD), then the checked-out branch.
+  const settings = useEnvironmentSettings(environmentId);
+  const configuredBaseBranch = activeProject
+    ? resolveProjectSettings(settings, activeProject.id, activeProject).settings
+        .defaultWorktreeBaseBranch
+    : "";
+  const configuredBaseRefState = usePaginatedBranches({
+    environmentId,
+    cwd: configuredBaseBranch.length > 0 ? activeProjectCwd : null,
+    query: configuredBaseBranch,
+  });
+  const configuredBaseRef = resolveConfiguredWorktreeBase(
+    configuredBaseRefState.refs,
+    configuredBaseBranch,
+  );
+  const isConfiguredBaseRefPending =
+    configuredBaseBranch.length > 0 &&
+    activeProjectCwd !== null &&
+    configuredBaseRefState.isPending &&
+    configuredBaseRefState.data === null;
   const defaultBranchName = useMemo(
     () => refs.find((refName) => refName.isDefault)?.name ?? null,
     [refs],
   );
-  const worktreeBaseBranchCandidate = isInitialBranchesLoadPending
-    ? null
-    : (defaultBranchName ?? currentGitBranch);
+  const worktreeBaseBranchCandidate =
+    isInitialBranchesLoadPending || isConfiguredBaseRefPending
+      ? null
+      : (configuredBaseRef ?? defaultBranchName ?? currentGitBranch);
 
   // A started thread's server is creating its worktree and records the branch
   // itself; defaulting it here would reset the thread to the base checkout and
