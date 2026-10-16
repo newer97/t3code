@@ -5,7 +5,7 @@ import {
   formatComposerContextReference,
 } from "@t3tools/shared/composerContextReferences";
 import { resolveMarkdownTextDirection } from "../lib/textDirection";
-import { markdownWithHtml } from "../lib/markdownDocument";
+import { markdownWithHtml, markdownWithTableBreaks } from "../lib/markdownDocument";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Platform, Share, StyleSheet, View } from "react-native";
 import {
@@ -141,7 +141,10 @@ function enrichedStyle(
 
 export function MobileEnrichedMarkdownText(props: SelectableMarkdownTextProps) {
   const { renderImage, resolveImageSource } = props;
-  const markdown = useMemo(() => markdownWithHtml(props.markdown), [props.markdown]);
+  const markdown = useMemo(
+    () => markdownWithTableBreaks(markdownWithHtml(props.markdown)),
+    [props.markdown],
+  );
   const direction = useMemo(() => resolveMarkdownTextDirection(props.markdown), [props.markdown]);
   const { themeAppearance } = useAppearancePreferences();
   const [documentAssets, setDocumentAssets] = useState<DocumentAssetsEvent["assets"]>([]);
