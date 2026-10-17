@@ -31,7 +31,7 @@ jobs:
         run: vp install
       - name: Verify RTL behavior
         run: |
-          vp test run apps/web/src/components/chat/MessagesTimeline.test.tsx apps/web/src/components/ChatMarkdown.test.tsx apps/mobile/src/lib/textDirection.test.ts scripts/build-desktop-artifact.test.ts
+          vp test run apps/web/src/components/chat/MessagesTimeline.test.tsx apps/web/src/lib/textDirection.test.ts apps/mobile/src/lib/textDirection.test.ts scripts/build-desktop-artifact.test.ts
           vp run --filter @t3tools/web typecheck
           vp run --filter @t3tools/mobile typecheck
           vp run --filter @t3tools/desktop typecheck
