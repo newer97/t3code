@@ -136,8 +136,15 @@ jobs:
       - name: Build resource monitor
         if: steps.resource_monitor_cache.outputs.cache-hit != 'true'
         run: cargo build --locked --release --manifest-path native/resource-monitor/Cargo.toml --target x86_64-unknown-linux-gnu
+      # The .env carries T3 Connect's public config (relay URL, Clerk IDs) into
+      # the server bundle. Without it the CLI builds with Connect disabled and
+      # updated servers drop off the relay.
       - name: Align package versions to release version
-        run: node scripts/update-release-package-versions.ts "${{ needs.version.outputs.version }}"
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/update-release-package-versions.ts "${{ needs.version.outputs.version }}"
+          cp .env.example .env
       - name: Build server bundle and web client
         run: vp run --filter t3 build
       - name: Apply web client branding
@@ -148,6 +155,8 @@ jobs:
         env:
           VP_NODE_VERSION: "26.8.2"
         run: node apps/server/scripts/cli.ts build-exe --verbose
+      - name: Verify T3 Connect config is baked in
+        run: grep -rqF "https://relay.t3.codes" apps/server/dist-exe
       - name: Build CLI archive
         shell: bash
         run: |
