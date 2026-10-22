@@ -1,4 +1,5 @@
-const CLI_RELEASE_REPOSITORY = "pingdotgg/t3code";
+// This fork publishes its own releases; upstream's tags carry builds without the RTL work.
+const CLI_RELEASE_REPOSITORY = "newer97/t3code";
 export const CLI_RELEASES_PAGE_URL = `https://github.com/${CLI_RELEASE_REPOSITORY}/releases`;
 export const CLI_RELEASE_CHECKSUMS_FILE = "SHA256SUMS";
 export const CLI_RELEASE_BASE_URL_ENV = "T3CODE_RELEASE_BASE_URL";
@@ -84,6 +85,10 @@ export function cliReleaseChannelOf(version: string): CliReleaseChannel {
  */
 export function cliReleaseIndexPageUrl(page: number): string {
   return `https://api.github.com/repos/${CLI_RELEASE_REPOSITORY}/releases?per_page=100&page=${page}`;
+}
+
+export function cliReleaseTagApiUrl(version: string): string {
+  return `https://api.github.com/repos/${CLI_RELEASE_REPOSITORY}/releases/tags/v${encodeURIComponent(version)}`;
 }
 
 /**
