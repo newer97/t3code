@@ -91,6 +91,71 @@ jobs:
           codesign --verify --deep --strict "$mount_dir/T3 Code (Nightly) RTL.app"
           xcrun stapler validate "$mount_dir/T3 Code (Nightly) RTL.app"
           test -f release/nightly-mac.yml
+      # The DMG bundles the server inside the app; `t3 update` on a macOS
+      # server needs the standalone CLI archive. Mirrors the mac `cli_archive`
+      # steps of release-desktop.yml, reusing the resource monitor the desktop
+      # build just compiled.
+      - name: Build server bundle and web client
+        run: vp run --filter t3 build
+      - name: Apply web client branding
+        run: node scripts/apply-web-brand-assets.ts nightly apps/server/dist/client
+      # Keep in step with SEA_NODE_VERSION in apps/server/vite.config.ts.
+      - name: Build CLI single-executable
+        env:
+          VP_NODE_VERSION: "26.8.2"
+        run: node apps/server/scripts/cli.ts build-exe --verbose
+      - name: Verify T3 Connect config is baked in
+        run: grep -rqF "https://relay.t3.codes" apps/server/dist-exe
+      - name: Import signing certificate for the CLI archive
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          keychain="$RUNNER_TEMP/t3-cli-signing.keychain-db"
+          keychain_password="$(openssl rand -hex 16)"
+          echo "::add-mask::$keychain_password"
+          cert_path="$RUNNER_TEMP/t3-cli-signing.p12"
+          printf '%s' "$CSC_LINK" | base64 -D > "$cert_path"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$cert_path" -k "$keychain" -P "$CSC_KEY_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$keychain_password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          identity="$(security find-identity -v -p codesigning "$keychain" | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | head -n 1)"
+          test -n "$identity"
+          echo "T3CODE_CLI_MAC_SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+      - name: Build signed and notarized CLI archive
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          key_path="$RUNNER_TEMP/AuthKey_cli_${APPLE_API_KEY_ID}.p8"
+          printf '%s' "$APPLE_API_KEY" > "$key_path"
+          export APPLE_API_KEY="$key_path"
+          monitor_dir="$RUNNER_TEMP/cli-resource-monitor/darwin-arm64"
+          mkdir -p "$monitor_dir"
+          cp native/resource-monitor/target/aarch64-apple-darwin/release/t3-resource-monitor "$monitor_dir/"
+          node scripts/build-cli-archive.ts \
+            --platform mac \
+            --arch arm64 \
+            --version "${{ needs.version.outputs.version }}" \
+            --resource-monitor-dir "$RUNNER_TEMP/cli-resource-monitor" \
+            --output-dir release-cli
+      - name: Smoke-test CLI archive
+        run: node scripts/smoke-cli-archive.ts --archive release-cli/* --expect-version "${{ needs.version.outputs.version }}"
+      - name: Upload CLI archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: cli-darwin-arm64
+          path: release-cli/*
+          if-no-files-found: error
+          retention-days: 1
       - name: Upload desktop artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -229,7 +294,7 @@ jobs:
 
           macOS Apple Silicon DMG, signed and notarized under shaden alawaji (XF983AFG67), bundle ID dev.snaya.t3code. Includes the bundled server.
 
-          Linux x64 CLI archive (`t3-<version>-linux-x64.tar.gz`) for remote servers. Servers already on this fork update from the app's update button or with `t3 update`. To move a server from upstream onto this fork once, run on it:
+          CLI archives for remote servers: Linux x64 (`t3-<version>-linux-x64.tar.gz`) and macOS Apple Silicon (`t3-<version>-darwin-arm64.tar.gz`). Servers already on this fork update from the app's update button or with `t3 update`. To move a server from upstream onto this fork once, run on it:
 
           ```
           T3CODE_RELEASE_BASE_URL=https://github.com/newer97/t3code/releases/download t3 update --version <this version>
