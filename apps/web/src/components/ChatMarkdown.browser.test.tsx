@@ -277,3 +277,72 @@ describe("ChatMarkdown Windows file links", () => {
     }
   });
 });
+
+describe("ChatMarkdown RTL", () => {
+  it("keeps file links and code left to right in Hebrew prose", async () => {
+    setup();
+    await using screen = await renderText(
+      "בדוק את `src/index.ts` והריץ `vp test` ואז:\n\n```sh\nvp test run\n```",
+    );
+    await vi.waitFor(() => {
+      const link = screen.container.querySelector(".chat-markdown-file-link");
+      const inline = [...screen.container.querySelectorAll("code")].find(
+        (element) => element.textContent === "vp test",
+      );
+      const block = screen.container.querySelector(".chat-markdown-codeblock");
+      expect(link).not.toBeNull();
+      expect(inline).toBeDefined();
+      expect(block).not.toBeNull();
+      for (const element of [link, inline, block]) {
+        expect(getComputedStyle(element!).direction).toBe("ltr");
+      }
+    });
+  });
+
+  it("orders table columns by the dominant script while keeping the toolbar left to right", async () => {
+    setup();
+    await using screen = await renderText(
+      "| | WSL Containers الجديد |\n| --- | --- |\n| وش تشغل؟ | حاويات من صور جاهزة، مثل `nginx` و Redis |",
+    );
+    await vi.waitFor(() => {
+      const table = screen.container.querySelector("table")!;
+      expect(table).not.toBeNull();
+      expect(getComputedStyle(table).direction).toBe("rtl");
+      expect(getComputedStyle(table.rows[0]!.cells[0]!).direction).toBe("rtl");
+      expect(table.rows[0]!.cells[0]!.getBoundingClientRect().left).toBeGreaterThan(
+        table.rows[0]!.cells[1]!.getBoundingClientRect().left,
+      );
+      expect(
+        getComputedStyle(screen.container.querySelector(".chat-markdown-table-container")!)
+          .direction,
+      ).toBe("ltr");
+    });
+    await screen.rerender(
+      <ChatMarkdown
+        cwd="/tmp/project"
+        text={"| Name | Description |\n| --- | --- |\n| test | בדיקה |"}
+      />,
+    );
+    await vi.waitFor(() => {
+      const table = screen.container.querySelector("table")!;
+      expect(getComputedStyle(table).direction).toBe("ltr");
+      expect(table.rows[0]!.cells[0]!.getBoundingClientRect().left).toBeLessThan(
+        table.rows[0]!.cells[1]!.getBoundingClientRect().left,
+      );
+    });
+  });
+
+  it("places the alert rule on the right of Hebrew prose", async () => {
+    setup();
+    await using screen = await renderText("> [!NOTE]\n> הודעת התראה בעברית.");
+    await vi.waitFor(() => {
+      const alert = screen.container.querySelector('[role="note"]')!;
+      expect(alert).not.toBeNull();
+      const style = getComputedStyle(alert);
+      expect(style.direction).toBe("rtl");
+      expect(style.borderRightWidth).toBe("2px");
+      expect(style.borderLeftWidth).toBe("0px");
+      expect(alert.querySelector("bdi")?.textContent).toBe("Note");
+    });
+  });
+});

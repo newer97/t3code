@@ -48,9 +48,13 @@ jobs:
           cache: true
       - name: Install dependencies
         run: vp install
+      - name: Install browser test runtime
+        working-directory: apps/web
+        run: vp exec playwright install chromium
       - name: Verify RTL behavior
         run: |
-          vp test run apps/web/src/components/chat/MessagesTimeline.test.tsx apps/web/src/lib/textDirection.test.ts apps/mobile/src/lib/textDirection.test.ts scripts/build-desktop-artifact.test.ts
+          vp test run apps/web/src/components/chat/MessagesTimeline.browser.test.tsx apps/web/src/components/ChatMarkdown.browser.test.tsx -t "RTL"
+          vp test run apps/web/src/lib/textDirection.test.ts apps/mobile/src/lib/textDirection.test.ts scripts/build-desktop-artifact.test.ts
           vp run --filter @t3tools/web typecheck
           vp run --filter @t3tools/mobile typecheck
           vp run --filter @t3tools/desktop typecheck
@@ -102,7 +106,7 @@ jobs:
       # Keep in step with SEA_NODE_VERSION in apps/server/vite.config.ts.
       - name: Build CLI single-executable
         env:
-          VP_NODE_VERSION: "26.8.2"
+          VP_NODE_VERSION: "26.12.1"
         run: node apps/server/scripts/cli.ts build-exe --verbose
       - name: Verify T3 Connect config is baked in
         run: grep -rqF "https://relay.t3.codes" apps/server/dist-exe
@@ -218,7 +222,7 @@ jobs:
       # with SEA_NODE_VERSION in apps/server/vite.config.ts.
       - name: Build CLI single-executable
         env:
-          VP_NODE_VERSION: "26.8.2"
+          VP_NODE_VERSION: "26.12.1"
         run: node apps/server/scripts/cli.ts build-exe --verbose
       - name: Verify T3 Connect config is baked in
         run: grep -rqF "https://relay.t3.codes" apps/server/dist-exe
