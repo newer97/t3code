@@ -8,7 +8,7 @@ import { resolveMarkdownTextDirection } from "../lib/textDirection";
 import {
   markdownForNativeRendering,
   markdownWithFileEmbeds,
-  markdownWithHtml,
+  markdownForNativeParsing,
   markdownWithInlineFileLinks,
   markdownWithTableBreaks,
 } from "../lib/markdownDocument";
@@ -166,7 +166,7 @@ export function MobileEnrichedMarkdownText(props: SelectableMarkdownTextProps) {
       };
     }
     const content = markdownWithInlineFileLinks(
-      markdownWithHtml(props.markdown),
+      markdownForNativeParsing(props.markdown),
       ENRICHED_INLINE_FILE_LINK_REGEX,
     );
     const files = markdownWithFileEmbeds(content, fileEmbedLabel);
