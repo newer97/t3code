@@ -4,7 +4,10 @@ import { createRef } from "react";
 import { expect, it } from "vite-plus/test";
 import { act, render } from "../../test/render";
 import { serializeEditorDoc } from "~/composer-rich-text-doc";
-import { ComposerPromptEditor, type ComposerPromptEditorHandle } from "./ComposerPromptEditor";
+import {
+  ComposerPromptEditorTiptap as ComposerPromptEditor,
+  type ComposerPromptEditorHandle,
+} from "./ComposerPromptEditorTiptap";
 
 async function mountEditor(value: string) {
   await using stack = new AsyncDisposableStack();
