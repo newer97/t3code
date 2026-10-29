@@ -33,7 +33,7 @@ import {
   createInboxReturnTracker,
   isThreadWorking,
 } from "@t3tools/client-runtime/state/thread-inbox";
-import { sortSettledThreads, sortThreads } from "@t3tools/client-runtime/state/thread-sort";
+import { sortSettledThreads } from "@t3tools/client-runtime/state/thread-sort";
 import {
   nextShownOrder,
   threadSearchMatchKey,
@@ -383,7 +383,7 @@ function resolveDraggedOrders(input: {
       applySidebarThreadDrop(thread, "settled", drag.occurredAt),
     ]).map(threadShellKey),
     activeOrder: input.sortActiveByLastMessage
-      ? sortThreads(droppedActive(), "updated_at").map(threadShellKey)
+      ? sortWorkingThreadsBySend(droppedActive()).map(threadShellKey)
       : workingShelfEnabled
         ? sortInboxThreadsByReturn(droppedActive(), inboxReturns.returnedAt).map(threadShellKey)
         : undefined,
@@ -669,9 +669,8 @@ function partitionSidebarThreads(input: SidebarThreadPartitionInput) {
   }
   // A loaded config gates dragging only; the sort must not depend on it, so web and mobile agree.
   const sortedPinned = sortPinnedThreadsForSidebar(pinned);
-  const sortedActive = sortActiveByLastMessage
-    ? sortThreads(active, "updated_at")
-    : sortActiveBySend
+  const sortedActive =
+    sortActiveBySend || sortActiveByLastMessage
       ? sortWorkingThreadsBySend(active)
       : workingShelfEnabled
         ? sortInboxThreadsByReturn(active, inboxObservation.returnedAt)
