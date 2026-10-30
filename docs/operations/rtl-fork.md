@@ -17,7 +17,7 @@ git push origin main
 If the checkout has no `upstream` remote, add it with
 `git remote add upstream https://github.com/pingdotgg/t3code.git`.
 Pushing to the fork's `main` starts **Fork Release** automatically. It
-runs RTL regression tests, packaging unit tests, and web/mobile typechecks
+runs packaging unit tests and web/mobile/desktop typechecks
 before building an Apple Silicon DMG and a Linux x64 CLI archive. You can also run it manually with
 `gh workflow run fork-release.yml --repo newer97/t3code --ref main`. Add
 `[skip release]` to a commit message when a push should not create an installer.

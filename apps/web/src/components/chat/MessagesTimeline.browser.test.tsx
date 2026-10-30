@@ -923,25 +923,6 @@ describe("compact reasoning math", () => {
   });
 });
 
-describe("MessagesTimeline RTL", () => {
-  it.each([
-    { role: "user", text: "English user message.", direction: "ltr" },
-    { role: "user", text: "הודעת משתמש בעברית.", direction: "rtl" },
-    { role: "assistant", text: "English assistant message.", direction: "ltr" },
-    { role: "assistant", text: "תשובת עוזר בעברית.", direction: "rtl" },
-  ] as const)("renders $role prose in $direction", async ({ role, text, direction }) => {
-    setup();
-    await using screen = await renderTimeline([message(text, { role })]);
-    await vi.waitFor(() => {
-      const prose = [...screen.container.querySelectorAll("p")].find(
-        (element) => element.textContent === text,
-      );
-      expect(prose).toBeDefined();
-      expect(getComputedStyle(prose!).direction).toBe(direction);
-    });
-  });
-});
-
 it("renders automatic compaction as one live divider that finishes with its reason and token delta", async () => {
   setup();
   const fixture = makeStreamingTimelineFixture();

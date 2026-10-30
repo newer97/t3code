@@ -15,23 +15,11 @@ function markdownProse(node: MarkdownNode | MarkdownChild): string {
 }
 
 /**
- * Direction from the first strong letter, matching how the browser resolves a
- * `dir="auto"` or `unicode-bidi: plaintext` paragraph.
- */
-export function resolveFirstStrongTextDirection(text: string): TextDirection {
-  for (const character of text) {
-    if (!LETTER_CHARACTER.test(character)) continue;
-    return RTL_SCRIPT_CHARACTER.test(character) ? "rtl" : "ltr";
-  }
-  return "ltr";
-}
-
-/**
  * Picks the direction whose letters dominate. Tables mix scripts freely (an
  * Arabic table full of product names), so first-strong-character detection
  * flips on a single leading Latin term; a majority vote does not.
  */
-export function resolveDominantTextDirection(text: string): TextDirection {
+function resolveDominantTextDirection(text: string): TextDirection {
   let rtl = 0;
   let ltr = 0;
   for (const character of text) {

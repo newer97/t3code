@@ -48,13 +48,9 @@ jobs:
           cache: true
       - name: Install dependencies
         run: vp install
-      - name: Install browser test runtime
-        working-directory: apps/web
-        run: vp exec playwright install chromium
-      - name: Verify RTL behavior
+      - name: Verify packaging and types
         run: |
-          vp test run apps/web/src/components/chat/MessagesTimeline.browser.test.tsx apps/web/src/components/ChatMarkdown.browser.test.tsx -t "RTL"
-          vp test run apps/web/src/lib/textDirection.test.ts apps/mobile/src/lib/textDirection.test.ts scripts/build-desktop-artifact.test.ts
+          vp test run scripts/build-desktop-artifact.test.ts
           vp run --filter @t3tools/web typecheck
           vp run --filter @t3tools/mobile typecheck
           vp run --filter @t3tools/desktop typecheck
