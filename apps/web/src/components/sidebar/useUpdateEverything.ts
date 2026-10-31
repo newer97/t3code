@@ -21,7 +21,6 @@ import {
   collectUpdateEverythingResult,
   describeUpdateEverything,
   runUpdateEverything,
-  type SkippedMachine,
   type UpdateRunMachine,
 } from "./updateEverything.logic";
 import {
@@ -70,7 +69,7 @@ export function useUpdateEverything(
   }));
   const { targets: behindServers, skipped: unreachable } = channelSwitch
     ? collectChannelSwitchTargets(machines, channelSwitch)
-    : collectServerUpdateTargets(machines, targetVersion, localUpdateVersion !== null);
+    : collectServerUpdateTargets(machines, targetVersion);
   // Fork versions are published as GitHub release archives rather than npm packages.
   const waitForRelease = behindServers.filter(
     (server) => server.selfUpdate !== "desktop-managed" && server.trackOnly !== true,
@@ -79,7 +78,7 @@ export function useUpdateEverything(
   const servers = published
     ? behindServers
     : behindServers.filter((server) => !waitForRelease.includes(server));
-  const skipped: ReadonlyArray<SkippedMachine> = [
+  const skipped = [
     ...unreachable,
     ...behindServers
       .filter((server) => !servers.includes(server))
