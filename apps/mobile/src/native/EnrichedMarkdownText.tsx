@@ -266,13 +266,16 @@ export function MobileEnrichedMarkdownText(props: SelectableMarkdownTextProps) {
     };
   }, [props.contextClipboardFragment, props.markdown]);
   const { fontScale } = useWindowDimensions();
-  const markdownStyle = useMemo(
-    () => ({
-      ...enrichedStyle(props.textStyle, themeAppearance === "dark", fontScale),
+  const markdownStyle = useMemo(() => {
+    const style = enrichedStyle(props.textStyle, themeAppearance === "dark", fontScale);
+    return {
+      ...style,
+      paragraph: props.textAlign
+        ? { ...style.paragraph, textAlign: props.textAlign }
+        : style.paragraph,
       linkVariants,
-    }),
-    [props.textStyle, themeAppearance, fontScale, linkVariants],
-  );
+    };
+  }, [props.textStyle, props.textAlign, themeAppearance, fontScale, linkVariants]);
   const renderers = renderImage
     ? {
         image: (block: MarkdownImageBlock) => {
@@ -313,8 +316,8 @@ export function MobileEnrichedMarkdownText(props: SelectableMarkdownTextProps) {
       >
         <EnrichedMarkdownText
           markdown={markdown}
-          writingDirection={direction}
           markdownStyle={markdownStyle}
+          writingDirection={props.writingDirection ?? direction}
           onLinksChange={onLinksChange}
           renderers={renderers}
           resolveImageSource={resolveNativeImageSource}
