@@ -2,7 +2,7 @@ import { DEFAULT_UNIFIED_SETTINGS } from "@t3tools/contracts/settings";
 
 import { AdvancedSettings } from "./AdvancedSettings";
 import { BranchNamingSettings } from "./BranchNamingSettings";
-import { WorktreeSubmodulesRow } from "./ProjectDefaultsSettings";
+import { WorktreeBaseBranchRow, WorktreeSubmodulesRow } from "./ProjectDefaultsSettings";
 import { ScopedSwitch } from "./ScopedSwitch";
 import { useSettingsScope } from "./SettingsScopeContext";
 import {
@@ -61,6 +61,7 @@ export function WorktreesSettingsPanel() {
         {!isProjectScope && <WorktreesDirectoryRow />}
         <StartFromRemoteRow />
         <AdvancedSettings targetIds={[searchableSetting("worktree-submodules").id]}>
+          <WorktreeBaseBranchRow />
           <WorktreeSubmodulesRow />
         </AdvancedSettings>
       </SettingsSection>

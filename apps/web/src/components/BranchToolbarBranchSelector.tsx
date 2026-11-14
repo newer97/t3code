@@ -1,5 +1,6 @@
 import { ThreadDetailsControl } from "./chat/ThreadDetailsControl";
 import { ComposerContextLabel } from "./ComposerContextLabel";
+import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { useRightPanelStore } from "../rightPanelStore";
 import { scopeProjectRef, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import {
@@ -29,6 +30,7 @@ import {
 
 import { useComposerDraftStore, type DraftId } from "../composerDraftStore";
 import { writeTextToClipboard } from "../hooks/useCopyToClipboard";
+import { useEnvironmentSettings } from "../hooks/useSettings";
 import { readLocalApi } from "../localApi";
 import { useOpenPrLink } from "../lib/openPullRequestLink";
 import { usePaginatedBranches } from "../state/queries";
@@ -54,6 +56,7 @@ import {
   resolveBranchToolbarPrBranch,
   resolveBranchSelectionTarget,
   resolveBranchToolbarValue,
+  resolveConfiguredWorktreeBase,
   resolveConfirmedSelectedRef,
   resolveDefaultWorktreeBaseBranch,
   resolveDraftEnvModeAfterBranchChange,
@@ -596,10 +599,29 @@ export function BranchToolbarBranchSelector({
     });
   };
 
-  const worktreeBaseBranchCandidate = isInitialBranchesLoadPending
-    ? null
-    : resolveDefaultWorktreeBaseBranch(refs);
-
+  const settings = useEnvironmentSettings(environmentId);
+  const configuredBaseBranch = activeProject
+    ? resolveProjectSettings(settings, activeProject.id, activeProject).settings
+        .defaultWorktreeBaseBranch
+    : "";
+  const configuredBaseRefState = usePaginatedBranches({
+    environmentId,
+    cwd: configuredBaseBranch.length > 0 ? activeProjectCwd : null,
+    query: configuredBaseBranch,
+  });
+  const configuredBaseRef = resolveConfiguredWorktreeBase(
+    configuredBaseRefState.refs,
+    configuredBaseBranch,
+  );
+  const isConfiguredBaseRefPending =
+    configuredBaseBranch.length > 0 &&
+    activeProjectCwd !== null &&
+    configuredBaseRefState.isPending &&
+    configuredBaseRefState.data === null;
+  const worktreeBaseBranchCandidate =
+    isInitialBranchesLoadPending || isConfiguredBaseRefPending
+      ? null
+      : (configuredBaseRef ?? resolveDefaultWorktreeBaseBranch(refs));
   const projectCloneDone = useProjectClone(activeProjectRef)?.phase === "done";
   const refreshRefsAfterClone = useEffectEvent(() => {
     if (branchCwd === null) return;

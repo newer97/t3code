@@ -230,6 +230,26 @@ export function isBranchHoldCurrent(
 }
 
 /**
+ * The ref a new worktree draft should start from when a base branch is
+ * configured: the local branch, else its remote-tracking ref, else null so
+ * the caller falls back to the repository default.
+ */
+export function resolveConfiguredWorktreeBase(
+  refs: ReadonlyArray<Pick<VcsRef, "name" | "isRemote" | "remoteName">>,
+  configuredBranch: string,
+): string | null {
+  if (configuredBranch.length === 0) return null;
+  const local = refs.find((ref) => !ref.isRemote && ref.name === configuredBranch);
+  if (local) return local.name;
+  const remote = refs.find(
+    (ref) =>
+      ref.isRemote &&
+      (ref.name === configuredBranch || ref.name === `${ref.remoteName}/${configuredBranch}`),
+  );
+  return remote?.name ?? null;
+}
+
+/**
  * The base a New worktree thread gets without the user picking one. Only a listed ref qualifies:
  * during a clone the status names an unborn HEAD that no ref backs.
  */

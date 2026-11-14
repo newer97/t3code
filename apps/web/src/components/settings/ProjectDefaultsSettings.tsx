@@ -7,6 +7,7 @@ import {
 import { createModelSelection, pickModelSelection } from "@t3tools/shared/model";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { useNavigate } from "@tanstack/react-router";
+import { useRef } from "react";
 
 import { useClientSettings } from "../../hooks/useSettings";
 import {
@@ -23,6 +24,7 @@ import { runtimeModeConfig, runtimeModeOptions } from "../chat/runtimeModeConfig
 import { PULL_REQUEST_MERGE_METHOD_LABELS } from "../pullRequest/pullRequestDetail.logic";
 import { TraitsPicker } from "../chat/TraitsPicker";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
+import { Input } from "../ui/input";
 import { toastManager } from "../ui/toast";
 import { Switch } from "../ui/switch";
 import { resolveDefaultModelSettingsPresentation } from "./ProjectDefaultsSettings.logic";
@@ -334,6 +336,7 @@ export function ProjectDefaultsSettings({ category }: { category: ProjectSetting
           {modelRow}
           {fallbackRow}
           {workspaceRow}
+          <WorktreeBaseBranchRow />
         </>
       ) : category === "general" ? (
         <>
@@ -580,6 +583,59 @@ export function WorktreeSubmodulesRow() {
             ))}
           </SelectPopup>
         </Select>
+      }
+    />
+  );
+}
+
+export function WorktreeBaseBranchRow() {
+  const { scope, targets } = useSettingsScope();
+  const settings = useScopedSettings();
+  const updateSettings = useUpdateScopedSettings();
+  const mixedBaseBranch = useScopedSettingsMixed(["defaultWorktreeBaseBranch"]);
+  const baseBranchEdited = useRef(false);
+  const isProjectScope = scope.kind === "project" || scope.kind === "checkout";
+
+  return (
+    <SettingsRow
+      serverScoped
+      settingKeys={["defaultWorktreeBaseBranch"]}
+      mixed={mixedBaseBranch}
+      title="Worktree base branch"
+      description={
+        isProjectScope
+          ? "Branch new worktrees in this project start from. Leave empty for the repository default."
+          : "Branch new worktrees start from. Leave empty for the repository default."
+      }
+      resetAction={
+        !isProjectScope && settings.defaultWorktreeBaseBranch !== "" ? (
+          <SettingResetButton
+            label="worktree base branch"
+            onClick={() => updateSettings({ defaultWorktreeBaseBranch: "" })}
+          />
+        ) : null
+      }
+      control={
+        <Input
+          key={`${targets.map((t) => `${t.environmentId}:${t.projectId}`).join(",")}:${mixedBaseBranch}:${settings.defaultWorktreeBaseBranch}`}
+          aria-label="Worktree base branch"
+          autoCapitalize="none"
+          spellCheck={false}
+          onChange={() => {
+            baseBranchEdited.current = true;
+          }}
+          placeholder={mixedBaseBranch ? "Mixed" : "Repository default"}
+          defaultValue={mixedBaseBranch ? "" : settings.defaultWorktreeBaseBranch}
+          onBlur={(event) => {
+            const value = event.target.value.trim();
+            if (
+              baseBranchEdited.current &&
+              (mixedBaseBranch || value !== settings.defaultWorktreeBaseBranch)
+            )
+              updateSettings({ defaultWorktreeBaseBranch: value });
+            baseBranchEdited.current = false;
+          }}
+        />
       }
     />
   );
