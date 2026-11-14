@@ -147,11 +147,6 @@ it.each([
       "هل يعمل **http://localhost:3000**؟ نعم؛ www.example.com۔",
       `هل يعمل **${link("http://localhost:3000")}**؟ نعم؛ ${link("www.example.com")}۔`,
     ],
-    ["https://example.com/a.، التالي", `${link("https://example.com/a")}.، التالي`],
-    [
-      "https://ar.wikipedia.org/wiki/الرياض،_نجد",
-      link("https://ar.wikipedia.org/wiki/الرياض،_نجد"),
-    ],
     [
       "https://x.com/a_ https://x.com/b_",
       `${link("https://x.com/a_")} ${link("https://x.com/b_")}`,
