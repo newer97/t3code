@@ -182,7 +182,7 @@ it.each([
   }
 });
 
-it("ends bare URLs at CJK punctuation with source positions", () => {
+it("ends bare URLs at CJK and Arabic punctuation with source positions", () => {
   const processor = unified().use(remarkParse).use(CHAT_MARKDOWN_REMARK_PLUGINS);
   const parse = (markdown: string) => processor.runSync(processor.parse(markdown), markdown);
   const at = (line: number, column: number, offset: number) => ({ line, column, offset });
