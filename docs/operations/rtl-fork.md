@@ -1,9 +1,9 @@
 # Maintaining the RTL fork
 
-`newer97/t3code` keeps upstream PR [#10779](https://github.com/pingdotgg/t3code/pull/10779)
-merged into `main`. A scheduled ChatGPT task can check upstream daily, resolve
-merge conflicts, verify the RTL behavior, and push the result to the fork. To
-sync locally:
+`newer97/t3code` tracks upstream `main`. Arabic and Hebrew direction now comes
+from upstream, so the fork carries only its release workflow, signing identity,
+and a few settings changes. A scheduled ChatGPT task can check upstream daily,
+resolve merge conflicts, and push the result to the fork. To sync locally:
 
 ```sh
 git switch main
@@ -53,6 +53,5 @@ Upstream deployment and publishing workflows are disabled in this fork's
 GitHub Actions settings. Keep them disabled when syncing; they depend on
 upstream infrastructure and publishing credentials.
 
-After the RTL change merges upstream, merge upstream again and resolve any
-duplicate changes. The fork release workflow and signing identity remain
-independent of whether the RTL patch has landed upstream.
+When a fork change lands upstream, take upstream's version while merging and
+drop the fork copy.
