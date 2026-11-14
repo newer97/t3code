@@ -43,7 +43,7 @@ export function MarkdownDetails({
         data-markdown-details-open={expanded ? "true" : "false"}
       >
         <CollapsibleTrigger
-          className="flex w-full items-center gap-2 py-2 text-start text-sm font-medium text-foreground rtl:[&_svg]:rotate-180 data-panel-open:[&_svg]:rotate-90"
+          className="flex w-full items-center gap-2 py-2 text-start text-sm font-medium text-foreground [&:dir(rtl):not([data-panel-open])_svg]:rotate-180 data-panel-open:[&_svg]:rotate-90"
           data-markdown-details-summary=""
         >
           <ChevronRightIcon
