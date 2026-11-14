@@ -290,7 +290,7 @@ jobs:
           files=(release/*.dmg release/*.zip release/*.blockmap release/nightly-mac.yml release/t3-*.tar.gz release/SHA256SUMS release/SHA256SUMS.txt)
           (( ${#files[@]} >= 5 ))
           cat > "$RUNNER_TEMP/release-notes.md" <<'NOTES'
-          Personal build of T3 Code with Arabic/Hebrew message direction from upstream PR #10779.
+          Personal build of T3 Code from upstream main.
 
           macOS Apple Silicon DMG, signed and notarized under shaden alawaji (XF983AFG67), bundle ID dev.snaya.t3code. Includes the bundled server.
 

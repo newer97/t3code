@@ -64,7 +64,7 @@ export function ContextChipShell({
 export function ContextChipPopover(props: {
   kind: ContextChipKind;
   icon: ReactNode;
-  label: ReactNode;
+  label: string;
   copyMarkdown?: string | undefined;
   accessibleLabel: string;
   /** Overrides the kind's accent color. */

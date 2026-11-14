@@ -134,7 +134,6 @@ import {
   usePreferredEditor,
 } from "../editorPreferences";
 import { openInEditorMenuLabel } from "../editorLabels";
-import { resolveMarkdownTableDirection } from "../lib/textDirection";
 import { resolveDiffThemeName } from "../lib/diffRendering";
 import { RenderErrorBoundary } from "./RenderErrorBoundary";
 import { useRenderedAppearance } from "../hooks/useTheme";
@@ -308,7 +307,6 @@ function CodexArtifactTemplateCard(props: {
       data-artifact-kind={props.template.artifactKind}
       data-markdown-copy={`${props.template.displayName} (${presentationLabel})\n\n`}
       data-skill-name={props.template.skillName}
-      dir="auto"
     >
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background text-muted-foreground shadow-xs">
@@ -1092,7 +1090,7 @@ const CHAT_MARKDOWN_COMPONENTS = {
           className={cn("flex items-center gap-1.5 font-medium", alert.titleClassName)}
         >
           <alert.Icon aria-hidden className="size-3.5 shrink-0" />
-          <bdi>{alert.label}</bdi>
+          {alert.label}
         </p>
         {children}
       </div>
@@ -1462,7 +1460,7 @@ const CHAT_MARKDOWN_COMPONENTS = {
       );
     }
     return (
-      <code {...props} className={className} dir="ltr">
+      <code {...props} className={className}>
         {children}
       </code>
     );
@@ -1662,10 +1660,8 @@ const CHAT_MARKDOWN_COMPONENTS = {
     }
     return <ChatMarkdownImageFallback alt={altText} copyMarkdown={copyMarkdown} kind={kind} />;
   },
-  table: function MarkdownTableRenderer({ node, ...props }) {
-    // The container stays LTR for its toolbar, so the table resolves its own
-    // column order from its content.
-    return <MarkdownTable {...props} dir={resolveMarkdownTableDirection(node)} />;
+  table: function MarkdownTableRenderer({ node: _node, ...props }) {
+    return <MarkdownTable {...props} />;
   },
   details: function MarkdownDetailsRenderer({ node: _node, children, open: detailsOpen, dir }) {
     return (
@@ -1687,11 +1683,7 @@ const CHAT_MARKDOWN_COMPONENTS = {
     const text = use(ChatMarkdownTextContext);
     const codeBlock = extractCodeBlock(children);
     if (!codeBlock) {
-      return (
-        <pre {...props} dir="ltr">
-          {children}
-        </pre>
-      );
+      return <pre {...props}>{children}</pre>;
     }
 
     const language = extractFenceLanguage(codeBlock.className);
@@ -1708,15 +1700,11 @@ const CHAT_MARKDOWN_COMPONENTS = {
     const highlightedCode = (
       <RenderErrorBoundary
         resetKeys={[codeBlock.code, language, diffThemeName, isStreaming]}
-        fallback={
-          <pre {...props} dir="ltr">
-            {children}
-          </pre>
-        }
+        fallback={<pre {...props}>{children}</pre>}
       >
         <Suspense
           fallback={
-            <pre {...props} dir="ltr" className="invisible" aria-hidden>
+            <pre {...props} className="invisible" aria-hidden>
               {children}
             </pre>
           }
@@ -1905,7 +1893,6 @@ function ChatMarkdown({
           "text-sm leading-relaxed text-foreground/[calc(90%+var(--appearance-contrast-boost)/10)]",
         className,
       )}
-      dir="auto"
       data-streaming={componentState.isStreaming ? "" : undefined}
       onCopy={handleCopy}
     >

@@ -4,7 +4,6 @@ import {
   formatComposerContextHref,
   formatComposerContextReference,
 } from "@t3tools/shared/composerContextReferences";
-import { resolveMarkdownTextDirection } from "../lib/textDirection";
 import {
   markdownForNativeRendering,
   markdownWithFileEmbeds,
@@ -235,7 +234,6 @@ export function MobileEnrichedMarkdownText(props: SelectableMarkdownTextProps) {
     const files = markdownWithFileEmbeds(content, fileEmbedLabel);
     return { ...files, markdown: markdownWithTableBreaks(files.markdown) };
   }, [props.markdown, fileEmbedLabel]);
-  const direction = useMemo(() => resolveMarkdownTextDirection(props.markdown), [props.markdown]);
   const [parsedLinkUrls, setParsedLinkUrls] = useState<ReadonlyArray<string>>([]);
   const onLinksChange = (links: MarkdownLinkOccurrence[]) => {
     const urls = [...new Set(links.map((link) => link.url))];
@@ -409,7 +407,7 @@ export function MobileEnrichedMarkdownText(props: SelectableMarkdownTextProps) {
         <EnrichedMarkdownText
           markdown={markdown}
           markdownStyle={markdownStyle}
-          writingDirection={props.writingDirection ?? direction}
+          writingDirection={props.writingDirection}
           onLinksChange={onLinksChange}
           renderers={renderers}
           resolveImageSource={resolveNativeImageSource}

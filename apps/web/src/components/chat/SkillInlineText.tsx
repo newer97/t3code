@@ -127,7 +127,7 @@ export function SkillChipPopover(props: {
     <ContextChipPopover
       kind="skill"
       icon={<SkillChipIcon />}
-      label={<bdi>{props.label}</bdi>}
+      label={props.label}
       accessibleLabel={`Skill ${props.label}`}
       copyMarkdown={props.copyMarkdown}
     >
