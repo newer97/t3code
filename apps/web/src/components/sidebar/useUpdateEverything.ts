@@ -5,6 +5,7 @@ import { APP_VERSION } from "~/branding";
 import { isDesktopLocalConnectionTarget } from "~/connection/desktopLocal";
 import { isElectron } from "~/env";
 import { useEnvironments } from "~/state/environments";
+import { useCliReleasePublished } from "~/state/cliReleasePublished";
 import { environmentIdsKey } from "~/state/environmentAtomList";
 import { environmentUpdateStatesAtom, serverEnvironment } from "~/state/server";
 import { environmentSessionStatesAtom } from "~/state/session";
@@ -67,9 +68,27 @@ export function useUpdateEverything(
     canMaintain: canUpdateServer(sessionStates[index]!),
     updateState: updateStates[index]!,
   }));
-  const { targets: servers, skipped } = channelSwitch
+  const { targets: behindServers, skipped: unreachable } = channelSwitch
     ? collectChannelSwitchTargets(machines, channelSwitch)
     : collectServerUpdateTargets(machines, targetVersion);
+  // Fork versions are published as GitHub release archives rather than npm packages.
+  const waitForRelease = behindServers.filter(
+    (server) => server.selfUpdate !== "desktop-managed" && server.trackOnly !== true,
+  );
+  const published = useCliReleasePublished(waitForRelease.length > 0 ? targetVersion : null);
+  const servers = published
+    ? behindServers
+    : behindServers.filter((server) => !waitForRelease.includes(server));
+  const skipped = [
+    ...unreachable,
+    ...behindServers
+      .filter((server) => !servers.includes(server))
+      .map((server) => ({
+        environmentId: server.environmentId,
+        label: server.serverLabel,
+        reason: `t3@${targetVersion} is not released yet`,
+      })),
+  ];
   // Track-only hosts save a setting and restart nothing, so they are neither listed nor counted.
   const moving = servers.filter((server) => server.trackOnly !== true);
   const restarts = collectRestartingMachines(machines, moving, localUpdateVersion !== null);

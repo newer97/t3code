@@ -37,6 +37,8 @@ describe("resolveCatalogDependencies", () => {
           "@clerk/backend@^3": "catalog:",
           "@scope/parent@^1>undici@^8": "catalog:",
           "parent@^1>@clerk/backend@^3": "catalog:",
+          "@scope/parent@^1>@clerk/backend@^3": "catalog:",
+          "react-dom@^19": "catalog:react",
         },
         { ...catalog, undici: "8.11.2", ws: "8.21.0" },
         "apps/desktop",
@@ -47,6 +49,8 @@ describe("resolveCatalogDependencies", () => {
         "@clerk/backend@^3": "3.18.1",
         "@scope/parent@^1>undici@^8": "8.11.2",
         "parent@^1>@clerk/backend@^3": "3.18.1",
+        "@scope/parent@^1>@clerk/backend@^3": "3.18.1",
+        "react-dom@^19": "19.2.0",
       },
     );
   });

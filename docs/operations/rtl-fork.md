@@ -1,0 +1,57 @@
+# Maintaining the RTL fork
+
+`newer97/t3code` tracks upstream `main`. Arabic and Hebrew direction now comes
+from upstream, so the fork carries only its release workflow, signing identity,
+and a few settings changes. A scheduled ChatGPT task can check upstream daily,
+resolve merge conflicts, and push the result to the fork. To sync locally:
+
+```sh
+git switch main
+git pull --ff-only origin main
+git fetch upstream main
+git merge upstream/main
+# Resolve any conflicts and run the focused tests before pushing.
+git push origin main
+```
+
+If the checkout has no `upstream` remote, add it with
+`git remote add upstream https://github.com/pingdotgg/t3code.git`.
+Pushing to the fork's `main` starts **Fork Release** automatically. It
+runs packaging unit tests and web/mobile/desktop typechecks
+before building an Apple Silicon DMG and a Linux x64 CLI archive. You can also run it manually with
+`gh workflow run fork-release.yml --repo newer97/t3code --ref main`. Add
+`[skip release]` to a commit message when a push should not create an installer.
+It signs and notarizes using the Shaden Alawaji team (`XF983AFG67`) and the
+fork's bundle identifier `dev.snaya.t3code`. Signing credentials live in
+GitHub Actions secrets; the Team ID is a repository variable.
+
+Releases use the normal `vX.Y.Z-nightly.YYYYMMDD.RUN` tags and include the
+DMG, ZIP, blockmaps, the `nightly-mac.yml` update manifest, the
+`t3-<version>-linux-x64.tar.gz` CLI archive, and its `SHA256SUMS`. **T3 Code (Nightly)
+RTL** checks `newer97/t3code` for updates on the Nightly track. Install the first
+signed DMG manually; subsequent releases use the normal download/restart button.
+Keep the updater on Nightly; this fork publishes no stable channel.
+
+Remote Linux x64 servers update from these releases. The CLI release
+repository in `packages/shared/src/cliRelease.ts` points at the fork, so a
+server running fork code downloads its archive from here, and the app's update
+button offers it once the release carries `SHA256SUMS`. The app only updates
+servers on the same channel, so a server still on upstream stable is skipped;
+move it onto the fork once by running on the server:
+
+```sh
+T3CODE_RELEASE_BASE_URL=https://github.com/newer97/t3code/releases/download \
+  t3 update --version <fork version>
+```
+
+Remote updates need the boot service (`t3 service install`) on the server. Other
+platforms have no fork archive and keep updating by hand.
+Native T3 Connect passkeys require upstream to authorize this team's application
+on its associated domain. The upstream authentication code is unchanged.
+
+Upstream deployment and publishing workflows are disabled in this fork's
+GitHub Actions settings. Keep them disabled when syncing; they depend on
+upstream infrastructure and publishing credentials.
+
+When a fork change lands upstream, take upstream's version while merging and
+drop the fork copy.
