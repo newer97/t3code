@@ -371,6 +371,21 @@ describe("ChatMarkdown favicon privacy", () => {
   });
 });
 
+describe("ChatMarkdown details direction", () => {
+  it("lays out an Arabic fold right to left and leaves an English one left to right", async () => {
+    setup();
+    await using screen = await renderText(
+      [
+        "<details><summary>تفاصيل التثبيت</summary>\n\nشغّل الأمر ثم أعد التشغيل.\n\n</details>",
+        "<details><summary>Install details</summary>\n\nRun the command, then restart.\n\n</details>",
+      ].join("\n\n"),
+    );
+    const summary = (name: string) => screen.getByRole("button", { name });
+    await expect.element(summary("تفاصيل التثبيت")).toHaveStyle({ direction: "rtl" });
+    await expect.element(summary("Install details")).toHaveStyle({ direction: "ltr" });
+  });
+});
+
 describe("ChatMarkdown external link labels", () => {
   it("keeps a leading emoji whole", async () => {
     setup();
