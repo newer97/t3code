@@ -99,10 +99,7 @@ jobs:
         run: vp run --filter t3 build
       - name: Apply web client branding
         run: node scripts/apply-web-brand-assets.ts nightly apps/server/dist/client
-      # Keep in step with SEA_NODE_VERSION in apps/server/vite.config.ts.
       - name: Build CLI single-executable
-        env:
-          VP_NODE_VERSION: "26.12.1"
         run: node apps/server/scripts/cli.ts build-exe --verbose
       - name: Verify T3 Connect config is baked in
         run: grep -rqF "https://relay.t3.codes" apps/server/dist-exe
@@ -214,11 +211,7 @@ jobs:
         run: vp run --filter t3 build
       - name: Apply web client branding
         run: node scripts/apply-web-brand-assets.ts nightly apps/server/dist/client
-      # The single-executable needs a Node with --build-sea (25.7+). Keep in step
-      # with SEA_NODE_VERSION in apps/server/vite.config.ts.
       - name: Build CLI single-executable
-        env:
-          VP_NODE_VERSION: "26.12.1"
         run: node apps/server/scripts/cli.ts build-exe --verbose
       - name: Verify T3 Connect config is baked in
         run: grep -rqF "https://relay.t3.codes" apps/server/dist-exe
