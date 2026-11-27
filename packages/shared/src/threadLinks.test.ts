@@ -154,6 +154,36 @@ describe("thread links", () => {
     );
   });
 
+  it.each(["\r", "\r\n", "\n"])(
+    "keeps BOM-prefixed thread link examples literal with %j line endings",
+    (eol) => {
+      const link = "<t3-thread://v2/local/t>";
+      for (const fence of ["~~~", "```"]) {
+        const example = [`\uFEFF${fence}`, link, fence].join(eol);
+        expect(replaceThreadLinks(`${example}${eol}${link}`, () => "linked")).toBe(
+          `${example}${eol}linked`,
+        );
+      }
+    },
+  );
+
+  it.each([
+    ["    ", ""],
+    ["\t", ""],
+    [">     ", "> "],
+    ["-     ", ""],
+  ])(
+    "rewrites prose links after an indented code line that looks like a fence (%j)",
+    (indent, prose) => {
+      for (const bom of ["", "\uFEFF"]) {
+        const example = `${bom}${indent}~~~\n${prose.trimEnd()}\n${prose}See `;
+        expect(replaceThreadLinks(`${example}<t3-thread://v2/local/t>`, () => "linked")).toBe(
+          `${example}linked`,
+        );
+      }
+    },
+  );
+
   it("leaves links inside code spans and fences as written", () => {
     const markdown = [
       "Live [old](t3-thread://v1/t1), literal `[old](t3-thread://v1/t1)`.",
@@ -223,14 +253,34 @@ describe("thread links", () => {
       ["1. Stray ` tick", `    > ${after} and \`code\``],
       ["1. Intro", "", "    Stray ` tick", `    > ${after} and \`code\``],
       ["- Intro", "", "Use `example", `    > ${hidden} end\``, after],
+      ...["- - -", "* \t* *", "___", "===", "-"].flatMap((boundary) => [
+        ["Stray ` tick", boundary, `${after} and \`code\``],
+        ["> Stray ` tick", `> ${boundary}`, `> ${after} and \`code\``],
+      ]),
+      ["Stray ` tick\r", "  ---\r", `${after} and \`code\``],
+      ["> Stray ` tick", "---", `${after} and \`code\``],
       ["Use `example", "```" + hidden + "`", after],
       ["\\\\``" + after + "`"],
+      [`Use \`example\r${hidden} end\`. Stray \` tick\r\r${after}\rand \`code\``],
+      [`Stray \` tick\r# ${after}\rand \`code\``],
     ]) {
       const joined = markdown.join("\n");
       expect(threadLinkRefs(joined, local)).toEqual([ref("env-1", "t1")]);
       expect(relabelThreadLinks(joined, local, () => "New")).toBe(
         joined.replace("<t3-thread://v2/env-1/t1>", "[New](t3-thread://v2/env-1/t1)"),
       );
+    }
+  });
+
+  it("keeps multiline code literal when a line only resembles a block boundary", () => {
+    for (const markdown of [
+      ...["--- text", "== =", "-_*", "    ==="].map((line) => ["Use `example", line]),
+      ["> Use `example", ">     ---"],
+      ["> Use `example", "==="],
+    ]) {
+      const source = [...markdown, "<t3-thread://v2/local/t1> end`"].join("\n");
+      expect(threadLinkRefs(source, local)).toEqual([]);
+      expect(relabelThreadLinks(source, local, () => "New")).toBe(source);
     }
   });
 
