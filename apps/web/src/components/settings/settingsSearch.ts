@@ -1034,7 +1034,14 @@ export const SETTINGS_SEARCH_ITEMS = [
     id: "diagnostics",
     title: msg("Diagnostics"),
     to: "/settings/maintenance",
-    searchTerms: [msg("logs traces processes resource history failures spans cpu memory")],
+    searchTerms: [
+      msg("logs traces processes resource history failures spans cpu memory"),
+      msg("Live Processes"),
+      msg("Latest Failures"),
+      msg("Most Common Failures"),
+      msg("Slowest Spans"),
+      msg("Top Span Names"),
+    ],
   },
   {
     id: "agent-feedback",
@@ -1050,6 +1057,7 @@ export const SETTINGS_SEARCH_ITEMS = [
     id: "open-source-licenses",
     title: msg("Open source licenses"),
     to: "/settings/about",
+    searchTerms: [msg("Third-party notices")],
   },
   {
     id: "keybindings",
@@ -1375,6 +1383,7 @@ export const SETTINGS_SEARCH_ITEMS = [
     id: "project-actions",
     title: msg("Actions"),
     to: "/settings/projects",
+    scope: "project-defaults",
     searchTerms: [msg("commands scripts setup run dev server checkout worktree t3.json import")],
   },
   {
@@ -1437,6 +1446,14 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: [msg("managed tunnel cloud other devices remote tunnels limit t3 chat")],
     desktopOnly: true,
     cloudOnly: true,
+  },
+  {
+    id: "mcp-url",
+    localEnvironmentOnly: true,
+    title: msg("MCP URL"),
+    to: "/settings/access",
+    targetId: "connections-environment",
+    searchTerms: [msg("outside agents chatgpt claude codex hosted bot oauth server address copy")],
   },
   {
     id: "connect-device-approval",
